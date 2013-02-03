@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+  <jmxConfigurator />
+  <!-- 控制台输出日志 -->
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <layout class="ch.qos.logback.classic.PatternLayout">
+      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </layout>
+  </appender>
+  <!-- 文件输出日志 (文件大小策略进行文件输出，超过指定大小对文件备份)-->
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <File>sylar.log</File>
+    <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+      <FileNamePattern>sylar.log.%i.bak</FileNamePattern>
+      <MinIndex>1</MinIndex>
+      <MaxIndex>12</MaxIndex>
+    </rollingPolicy>
+    <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+      <MaxFileSize>10MB</MaxFileSize>
+    </triggeringPolicy>
+    <layout class="ch.qos.logback.classic.PatternLayout">
+      <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
+    </layout>
+    <!-- 过滤器，只记录INFO级别的日志 -->  
+     <filter class="ch.qos.logback.classic.filter.LevelFilter">  
+            <level>INFO</level>  
+            <onMatch>ACCEPT</onMatch>  
+            <onMismatch>DENY</onMismatch>  
+        </filter> 
+  </appender>
+  
+      <!-- 不同級別的文件記錄在不同的日誌文件中 -->  
+    <appender name="FILEINFO"  
+        class="ch.qos.logback.core.rolling.RollingFileAppender">  
+        <Encoding>UTF-8</Encoding>  
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">  
+            <!--在工程目录下自动生成logs文件夹 -->  
+            <FileNamePattern>logs/log-info.%d{yyyy-MM-dd}.log</FileNamePattern>  
+            <!-- 最多30个文件 -->  
+            <MaxHistory>30</MaxHistory>  
+        </rollingPolicy>  
+        <layout class="ch.qos.logback.classic.PatternLayout">  
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n  
+            </pattern>  
+        </layout>  
+        <!-- 过滤器，只记录INFO级别的日志 -->  
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">  
+            <level>INFO</level>  
+            <onMatch>ACCEPT</onMatch>  
+            <onMismatch>DENY</onMismatch>  
+        </filter>  
+    </appender>  
+  
+  <appender name="FILEERROR"  
+        class="ch.qos.logback.core.rolling.RollingFileAppender">  
+        <Encoding>UTF-8</Encoding>  
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">  
+            <!--在工程目录下自动生成logs文件夹 -->  
+            <FileNamePattern>logs/log-error.%d{yyyy-MM-dd}.log</FileNamePattern>  
+            <!-- 最多30个文件 -->  
+            <MaxHistory>30</MaxHistory>  
+        </rollingPolicy>  
+        <layout class="ch.qos.logback.classic.PatternLayout">  
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n  
+            </pattern>  
+        </layout>  
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">  
+            <level>ERROR</level>  
+            <onMatch>ACCEPT</onMatch>  
+            <onMismatch>DENY</onMismatch>  
+        </filter>  
+    </appender> 
+    
+   <root>  
+        <level value="INFO" />  
+        <appender-ref ref="STDOUT" />  
+        <appender-ref ref="FILEINFO" />  
+        <appender-ref ref="FILEERROR" />  
+    </root>  
+    
+  <!--这里指定logger name 是为jmx设置日志级别做铺垫 -->
+  <!-- 
+  <logger name="com.xxx.xxx">
+    <level value="DEBUG" />
+    <appender-ref ref="STDOUT" />
+    <appender-ref ref="FILE" />
+  </logger>
+   -->
+</configuration>
