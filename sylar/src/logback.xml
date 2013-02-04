@@ -43,9 +43,9 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n  
             </pattern>  
         </layout>  
-        <!-- 过滤器，只记录INFO级别的日志 -->  
+        <!-- 过滤器，只记录DEBUG级别的日志 -->  
         <filter class="ch.qos.logback.classic.filter.LevelFilter">  
-            <level>INFO</level>  
+            <level>DEBUG</level>  
             <onMatch>ACCEPT</onMatch>  
             <onMismatch>DENY</onMismatch>  
         </filter>  
@@ -72,7 +72,7 @@
     </appender> 
     
    <root>  
-        <level value="INFO" />  
+        <level value="DEBUG" />  
         <appender-ref ref="STDOUT" />  
         <appender-ref ref="FILEINFO" />  
         <appender-ref ref="FILEERROR" />  
