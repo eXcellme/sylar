@@ -3,8 +3,11 @@ package nam.doog.sylar.spider;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.LinkedList;
+import java.util.List;
 
 import nam.doog.sylar.entity.Recruit;
+import nam.doog.sylar.search.SearchUtil;
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -101,24 +104,32 @@ public class Spider {
 	 * @param searchUrl
 	 * @throws Exception
 	 */
-	public void crawl(String searchUrl) throws Exception{
+	public List<Recruit> crawl(String searchUrl) throws Exception{
 		// 获取搜索出的站点，保存在tovisit中
+		long crawlSitesTime1 = System.currentTimeMillis();
 		if(needProxy){
 			HttpHost proxy = new HttpHost(proxyHost, proxyPort);
 			crawlSites(searchUrl, proxy);
 		}else{
 			crawlSites(searchUrl);
 		}
+		long crawlSitesTime2 = System.currentTimeMillis();
+		log.info("招聘页面爬取完毕，爬取量："+tovisit.size()+"，耗时："+(crawlSitesTime2-crawlSitesTime1)+"毫秒");
 		// 提取每个页面的信息
 		String pageUrl = "";
+		List<Recruit> recruits = new LinkedList<Recruit>(); 
 		while((pageUrl = tovisit.poll())!=null){
 			visited.add(pageUrl);
 			System.out.println(pageUrl);
 			if(needProxy)
 				Extractor.proxy(proxyHost,proxyPort);
+			// 提取一个页面的信息并封装成对象
 			Recruit r = Extractor.extractData(pageUrl);
-			System.out.println(r);
+			if(r!=null)
+				recruits.add(r);
 		}
+		log.info("招聘信息提取封装完毕，提取量："+recruits.size()+"，耗时："+(System.currentTimeMillis()-crawlSitesTime2)+"毫秒");
+		return recruits;
 	}
 	/**
 	 * 爬取一个网页
@@ -132,9 +143,13 @@ public class Spider {
 		
 	}
 	public static void main(String[] args) throws Exception {
+		String indexPath = "D:/test_index";
 		String searchUrl = "http://sou.zhaopin.com/Jobs/SearchResult.ashx?bj=160000&sj=044&in=210500&pd=1&jl=%E5%8C%97%E4%BA%AC&kw=java&sm=0&p=1&sf=5000&st=8000&we=0103&el=4&et=2";
 		Spider s = new Spider("127.0.0.1",5865);
-		s.crawl(searchUrl);
+		List<Recruit> recruits = s.crawl(searchUrl);
+		SearchUtil.createIndex(indexPath, recruits);
+		String keyword = "weblogic";
+		SearchUtil.search(indexPath, keyword);
 		
 	}
 }
