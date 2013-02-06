@@ -2,12 +2,20 @@ package nam.doog.sylar.search;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import nam.doog.sylar.entity.Recruit;
-import nam.doog.sylar.spider.Extractor;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field.Store;
@@ -18,6 +26,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
@@ -45,11 +54,16 @@ public class SearchUtil {
 		 for(Recruit r : list){
 			 System.out.println(r);
 			 Document doc =new Document();
-			 doc.add(new TextField("job_desc", r.getJobDescription(), Store.YES));
-			 doc.add(new StringField("job_name",r.getJobName(),Store.YES));
-			 doc.add(new StringField("company_name",r.getCompanyName(),Store.YES));
+			 if(r.getJobDescription()!=null)
+				 doc.add(new TextField("job_desc", r.getJobDescription(), Store.YES));
+			 if(r.getJobName()!=null)
+				 doc.add(new StringField("job_name",r.getJobName(),Store.YES));
+			 if(r.getCompanyName()!=null)
+				 doc.add(new StringField("company_name",r.getCompanyName(),Store.YES));
 			 writer.addDocument(doc);
 		 }
+		 // 合一
+		 writer.forceMerge(1);
 		 writer.commit();
 		 writer.close();
 		 long s2 = System.currentTimeMillis();
@@ -71,18 +85,66 @@ public class SearchUtil {
 			 String comName = doc.get("company_name");
 			 log.debug("Search Result : "+jobName+"\n\t"+jobDesc+"\n\t"+comName);
 		 }
-		 
 	 }
-	 
+		 public static void statics(String indexPath) throws IOException{
+			 IndexReader reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
+			   //显示document数
+			   log.debug(new Date()+"");
+			   log.debug(reader+"该索引共含 "+reader.numDocs()+"篇文档");
+			   // 对keywords.dic中的词进行整个索引中的词频统计
+			   List<String> lines = FileUtils.readLines( new File("src/keywords.dic"),"utf-8");
+			   
+			   Map< String,Long> tm = new TreeMap<String,Long>();
+			   Map< String,Long> tm2 = new TreeMap<String,Long>();
+			   for(String line : lines){
+				   long tf = reader.totalTermFreq(new Term("job_desc",line));
+				   long df = reader.docFreq(new Term("job_desc",line));
+				   if(tf>0){
+					   tm.put(line,tf);
+				   }
+				   if(df>0){
+					   tm2.put(line, df);
+				   }
+			   }
+			   tm = sortMapByValue(tm,true);
+			   log.info("文档频率：");
+			   tm2 = sortMapByValue(tm2,true);
+			   System.out.println(tm);
+			   System.out.println(tm2);
+		 }
+		 
+		 
+		 /** 排序map
+		 * @param tm
+		 * @param desc 是否降序
+		 * @return
+		 */
+		public static Map<String, Long> sortMapByValue(Map<String, Long> tm,final boolean desc) {
+			 List<Map.Entry<String, Long>> list = new LinkedList<Map.Entry<String,Long>>(tm.entrySet());
+			 Collections.sort(list, new Comparator<Map.Entry<String,Long>>() {
+				@Override
+				public int compare(Entry<String, Long> o1,
+						Entry<String, Long> o2) {
+					if(!desc)
+						return (int) (o1.getValue() - o2.getValue());
+					else
+						return  (int) (o2.getValue() - o1.getValue());
+				}
+			 });
+			 Map<String, Long>  ret = new LinkedHashMap<String, Long> ();
+			 for(Entry<String,Long> e : list){
+					 ret.put(e.getKey(),e.getValue());
+					 log.debug(e.getKey() + "出现："+e.getValue()+"次");
+			 }
+			 return ret;
+		}
+
+		public static void extractDataFromIndex(String indexPath,String filename) throws IOException{
+			 IndexReader reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
+			}
 	 public static void main(String[] args) throws IOException, ParseException {
 		 String indexPath = "D:/test_index";
-		 String pageUrl = "http://jobs.zhaopin.com/beijing/JA|VA%E5%BC%80%E5%8F%91%E5%B7%A5%E7%A8%8B%E5%B8%88_336124514250080.htm";
-		 Extractor.proxy("127.0.0.1", 5865);
-		 Recruit r = Extractor.extractData(pageUrl);
-		 System.out.println(r);
-		 List<Recruit> list = new ArrayList<Recruit>();
-		 list.add(r);
-		 createIndex(indexPath, list);
-		search(indexPath, "java");
+//		search(indexPath, "java");''
+		statics(indexPath);
 	}
 }

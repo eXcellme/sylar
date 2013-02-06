@@ -23,8 +23,8 @@ import org.slf4j.LoggerFactory;
 
 public class Spider {
 	private Logger log = LoggerFactory.getLogger(Spider.class);
-	private ToVisitList<String> tovisit = new ToVisitList<String>(512);
-	private VisitedList<String> visited = new VisitedList<String>(512);
+	private ToVisitList<String> tovisit = new ToVisitList<String>(5120);
+	private VisitedList<String> visited = new VisitedList<String>(5120);
 	private boolean needProxy ; 
 	private String proxyHost ;
 	private int proxyPort ;
@@ -108,6 +108,7 @@ public class Spider {
 		// 获取搜索出的站点，保存在tovisit中
 		long crawlSitesTime1 = System.currentTimeMillis();
 		if(needProxy){
+			Extractor.proxy(proxyHost,proxyPort);
 			HttpHost proxy = new HttpHost(proxyHost, proxyPort);
 			crawlSites(searchUrl, proxy);
 		}else{
@@ -120,13 +121,16 @@ public class Spider {
 		List<Recruit> recruits = new LinkedList<Recruit>(); 
 		while((pageUrl = tovisit.poll())!=null){
 			visited.add(pageUrl);
-			System.out.println(pageUrl);
-			if(needProxy)
-				Extractor.proxy(proxyHost,proxyPort);
+//			if(needProxy)
+				
 			// 提取一个页面的信息并封装成对象
+			try{
 			Recruit r = Extractor.extractData(pageUrl);
 			if(r!=null)
 				recruits.add(r);
+			}catch(Exception e){
+				log.error("提取页面封装对象发生严重错误",e);
+			}
 		}
 		log.info("招聘信息提取封装完毕，提取量："+recruits.size()+"，耗时："+(System.currentTimeMillis()-crawlSitesTime2)+"毫秒");
 		return recruits;
@@ -144,12 +148,13 @@ public class Spider {
 	}
 	public static void main(String[] args) throws Exception {
 		String indexPath = "D:/test_index";
-		String searchUrl = "http://sou.zhaopin.com/Jobs/SearchResult.ashx?bj=160000&sj=044&in=210500&pd=1&jl=%E5%8C%97%E4%BA%AC&kw=java&sm=0&p=1&sf=5000&st=8000&we=0103&el=4&et=2";
+		String searchUrl = "http://sou.zhaopin.com/Jobs/SearchResult.ashx?bj=160200&sj=053&in=210500&jl=%E5%8C%97%E4%BA%AC&kw=java&sm=0&p=1&sf=0";
 		Spider s = new Spider("127.0.0.1",5865);
 		List<Recruit> recruits = s.crawl(searchUrl);
 		SearchUtil.createIndex(indexPath, recruits);
-		String keyword = "weblogic";
-		SearchUtil.search(indexPath, keyword);
+		SearchUtil.statics(indexPath);
+//		String keyword = "weblogic";
+//		SearchUtil.search(indexPath, keyword);
 		
 	}
 }

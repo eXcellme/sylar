@@ -4,14 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 
 import nam.doog.sylar.entity.Recruit;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -35,12 +30,10 @@ public class Extractor {
 	private static Logger log = LoggerFactory.getLogger(Extractor.class);
 	public static Recruit extractData(String pageUrl) throws MalformedURLException, IOException{
 		Document doc = pageDoc(pageUrl);
-		String html = doc.html();
-		System.out.println("doc:"+doc);
-		FileUtils.writeStringToFile(new File("D:/test_index/file"),html ,"utf-8");
+//		String html = doc.html();
+//		FileUtils.writeStringToFile(new File("D:/test_index/file"),html ,"utf-8");
 		// 工作描述
 		Elements intros = doc.select(".company-introduction"); // Jsoup有时不能提取出结果
-		FileUtils.writeStringToFile(new File("D:/test_index/file"),intros.html() ,"utf-8");
 		Element jobdescEle = intros.first();
 		System.out.println(jobdescEle);
 		Recruit r = new Recruit();
@@ -52,6 +45,7 @@ public class Extractor {
 		Element jobNameEle = doc.select(".Terminal-title").first();
 		if(jobNameEle!=null)
 			r.setJobName(jobNameEle.text());
+		else return null;
 		// 公司名称 <dt>后的<dd>
 		Element comanyNameEle = doc.getElementsMatchingOwnText("公司名称：").first().nextElementSibling();
 		String companyName = comanyNameEle.text();
@@ -61,7 +55,7 @@ public class Extractor {
 	public static void main(String[] args) throws MalformedURLException, IOException {
 		String url = "http://jobs.zhaopin.com/beijing/JA|VA%E5%BC%80%E5%8F%91%E5%B7%A5%E7%A8%8B%E5%B8%88_336124514250080.htm";
 		url = "http://jobs.zhaopin.com/beijing/java%E5%BC%80%E5%8F%91%E5%B7%A5%E7%A8%8B%E5%B8%88_415833414250002.htm";
-		url = "http://jobs.zhaopin.com/beijing/%E9%AB%98%E7%BA%A7%E4%BA%91%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91%E5%B7%A5%E7%A8%8B%E5%B8%88_412411516250010.htm";
+		url = "http://jobs.zhaopin.com/beijing/高级JAVA 工程师_336880117250099.htm";
 		Extractor.proxy("127.0.0.1", 5865);
 		Recruit r = extractData(url);
 		System.out.println(r);
@@ -80,9 +74,11 @@ public class Extractor {
 			hc.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
 			// 转义
 			// TODO 地址转义问题 （|）
-			pageUrl = URLDecoder.decode(pageUrl,"utf-8");
+//			pageUrl = URLEncoder.encode(pageUrl, "gb2312");
+//			pageUrl = URLDecoder.decode(pageUrl,"utf-8");
 //			pageUrl = URLEncoder.encode(pageUrl,"utf-8");
-			pageUrl = pageUrl.replace("|", "%7C");
+			pageUrl = escape(pageUrl);
+			
 			System.out.println("pageUrl:"+pageUrl);
 			HttpGet get = new HttpGet(pageUrl);
 			HttpResponse res = hc.execute(get);
@@ -92,6 +88,22 @@ public class Extractor {
 			return Jsoup.parse(new URL(pageUrl),1000*3);
 		}
 	}
+	private static String escape(String pageUrl) {
+		System.out.println(pageUrl);
+		if(pageUrl!=null && pageUrl.toLowerCase().startsWith("http://")){
+			try {
+//				pageUrl = "http://"+URLEncoder.encode(pageUrl.substring("http://".length()),"gb2312");
+				pageUrl = pageUrl.replace("|", "%7C").replace(" ", "%20");
+			} catch (RuntimeException e) {
+				log.error("超链接转码异常",e);
+				return null;
+			}
+		}
+		return pageUrl;
+	}
+	
+	
+	
 	private static boolean needProxy = false;
 	private static String proxyHost ;
 	private static int proxyPort ; 
