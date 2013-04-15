@@ -2,6 +2,11 @@ package nam.doog.sylar.entity;
 
 import java.util.Date;
 
+/**
+ * 招聘信息实体
+ * @author bflee
+ *
+ */
 public class Recruit {
 	public String getJobName() {
 		return jobName;

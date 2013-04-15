@@ -146,15 +146,5 @@ public class Spider {
 		
 		
 	}
-	public static void main(String[] args) throws Exception {
-		String indexPath = "D:/test_index";
-		String searchUrl = "http://sou.zhaopin.com/Jobs/SearchResult.ashx?bj=160200&sj=053&in=210500&jl=%E5%8C%97%E4%BA%AC&kw=java&sm=0&p=1&sf=0";
-		Spider s = new Spider("127.0.0.1",5865);
-		List<Recruit> recruits = s.crawl(searchUrl);
-		SearchUtil.createIndex(indexPath, recruits);
-		SearchUtil.statics(indexPath);
-//		String keyword = "weblogic";
-//		SearchUtil.search(indexPath, keyword);
-		
-	}
+
 }
