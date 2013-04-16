@@ -7,6 +7,11 @@ import java.util.Map.Entry;
 
 import org.apache.http.client.methods.HttpGet;
 
+/**
+ * 为HttpGet增添了特殊方法
+ * @author "bflee"
+ *
+ */
 public class NewHttpGet extends HttpGet {
 		/**
 		 *  the querystrings of get method
@@ -30,6 +35,9 @@ public class NewHttpGet extends HttpGet {
 			queries.put(key,value);
 			super.setURI(URI.create(getUrlString()));
 		}
+		/**
+		 * 获取url完整地址
+		 */
 		public String getUrlString(){
 			StringBuilder sb = new StringBuilder();
 			URI uri = this.getURI();
@@ -51,7 +59,7 @@ public class NewHttpGet extends HttpGet {
 			return sb.toString();
 		}
 		public static void main(String[] args) {
-			String url = "http://www.abc.com?a=3&b=5&c=9";
+			String url = "http://www.abc.com?a=3&b=5&c=9&b=1";
 			NewHttpGet g = new NewHttpGet(url);
 			System.out.println(g.getUrlString());
 			String a = "abc";

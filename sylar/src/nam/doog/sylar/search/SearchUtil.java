@@ -47,16 +47,23 @@ import org.wltea.analyzer.lucene.IKAnalyzer;
 public class SearchUtil {
 	private static Logger log = LoggerFactory.getLogger(SearchUtil.class);
 
+	/**
+	 * 建立招聘信息索引
+	 * @param indexPath 建立索引目录
+	 * @param list 招聘信息实体表
+	 * @throws IOException
+	 */
 	public static void createIndex(String indexPath, List<Recruit> list)
 			throws IOException {
 		long s1 = System.currentTimeMillis();
 		IndexWriterConfig conf = new IndexWriterConfig(Version.LUCENE_41,
 				new IKAnalyzer());
+		// 新建或追加
 		conf.setOpenMode(OpenMode.CREATE_OR_APPEND);
 		Directory dir = FSDirectory.open(new File(indexPath));
 		IndexWriter writer = new IndexWriter(dir, conf);
 		for (Recruit r : list) {
-			System.out.println(r);
+//			System.out.println(r);
 			Document doc = new Document();
 			if (r.getJobDescription() != null)
 				doc.add(new TextField("job_desc", r.getJobDescription(),
@@ -76,6 +83,13 @@ public class SearchUtil {
 		log.info("建立索引完毕，耗时：" + (s2 - s1) + "毫秒");
 	}
 
+	/** 
+	 * 搜索关键词
+	 * @param indexPath 索引所在目录
+	 * @param keyword 关键词
+	 * @throws IOException
+	 * @throws ParseException
+	 */
 	public static void search(String indexPath, String keyword)
 			throws IOException, ParseException {
 		IndexReader reader = DirectoryReader.open(FSDirectory.open(new File(
@@ -99,9 +113,7 @@ public class SearchUtil {
 
 	/**
 	 * 搜索索引，列出关键词(keywords.dic)的词频
-	 * 
-	 * @param indexPath
-	 *            使用lucene进行索引后的目录
+	 * @param indexPath 使用lucene进行索引后的目录
 	 * @throws IOException
 	 */
 	public static void statics(String indexPath) throws IOException {
@@ -111,13 +123,15 @@ public class SearchUtil {
 		log.debug(new Date() + "");
 		log.debug(reader + "该索引共含 " + reader.numDocs() + "篇文档");
 		// 对keywords.dic中的词进行整个索引中的词频统计
-		List<String> lines = FileUtils.readLines(new File("src/keywords.dic"),
-				"utf-8");
+		@SuppressWarnings("unchecked")
+		List<String> lines = FileUtils.readLines(new File("src/keywords.dic"),"utf-8");
 
 		Map<String, Long> tm = new TreeMap<String, Long>();
 		Map<String, Long> tm2 = new TreeMap<String, Long>();
 		for (String line : lines) {
+			// 统计词频
 			long tf = reader.totalTermFreq(new Term("job_desc", line));
+			// 按文档统计词频（一篇文档含重复词时只算一次）
 			long df = reader.docFreq(new Term("job_desc", line));
 			if (tf > 0) {
 				tm.put(line, tf);
@@ -129,8 +143,14 @@ public class SearchUtil {
 		tm = sortMapByValue(tm, true);
 		log.info("文档频率：");
 		tm2 = sortMapByValue(tm2, true);
-		System.out.println(tm);
-		System.out.println(tm2);
+		printMap(tm);
+		printMap(tm2);
+	}
+
+	private static void printMap(Map<String, Long> tm) {
+		for(Entry<String, Long> en : tm.entrySet()){
+			System.out.println(en.getKey() + "：" + en.getValue());
+		}
 	}
 
 	/**
@@ -157,15 +177,9 @@ public class SearchUtil {
 		Map<String, Long> ret = new LinkedHashMap<String, Long>();
 		for (Entry<String, Long> e : list) {
 			ret.put(e.getKey(), e.getValue());
-			log.debug(e.getKey() + "出现：" + e.getValue() + "次");
+			log.trace(e.getKey() + "出现：" + e.getValue() + "次");
 		}
 		return ret;
-	}
-
-	public static void extractDataFromIndex(String indexPath, String filename)
-			throws IOException {
-		IndexReader reader = DirectoryReader.open(FSDirectory.open(new File(
-				indexPath)));
 	}
 
 	public static void main(String[] args) throws IOException, ParseException {
